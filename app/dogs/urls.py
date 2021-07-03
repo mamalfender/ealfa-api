@@ -6,6 +6,8 @@ from dogs import views
 
 router = DefaultRouter()
 router.register('tags', views.TagViewSet)
+router.register('opsdone', views.OpsDoneViewSet)
+
 
 app_name = 'dogs'
 

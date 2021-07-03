@@ -49,3 +49,11 @@ class ModelTests(TestCase):
             name='Neutered'
         )
         self.assertEqual(str(tag), tag.name)
+
+    def test_opsdone_str(self):
+        """Test the opsdone string representation"""
+        opsdone = models.OpsDone.objects.create(
+            user=sample_user(),
+            name='operation date'
+        )
+        self.assertEqual(str(opsdone), opsdone.name)
