@@ -6,14 +6,15 @@ from core.models import Tag, OpsDone
 from dogs import serializers
 
 
-class TagViewSet(viewsets.GenericViewSet,
-                 mixins.ListModelMixin,
-                 mixins.CreateModelMixin):
-    """Manage tags in the database"""
+class BaseAttrViewSet(viewsets.GenericViewSet,
+                      mixins.ListModelMixin,
+                      mixins.CreateModelMixin,
+                      mixins.DestroyModelMixin,
+                      mixins.UpdateModelMixin,
+                      mixins.RetrieveModelMixin):
+    """Manage opsdone in the database"""
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
-    queryset = Tag.objects.all()
-    serializer_class = serializers.TagSerializer
 
     # def get_queryset(self):
     #     """Return objects for the current authenticated user only"""
@@ -23,29 +24,19 @@ class TagViewSet(viewsets.GenericViewSet,
         if self.action == 'create':
             composed_perm = IsAdminUser
             return [composed_perm()]
-
-        return super().get_permissions()
-
-    def perform_create(self, serializer):
-        """Create a new tag"""
-        serializer.save(user=self.request.user)
-
-
-class OpsDoneViewSet(viewsets.GenericViewSet,
-                     mixins.ListModelMixin,
-                     mixins.CreateModelMixin):
-    """Manage opsdone in the database"""
-    authentication_classes = (TokenAuthentication,)
-    permission_classes = (IsAuthenticated,)
-    queryset = OpsDone.objects.all()
-    serializer_class = serializers.OpsDoneSerializer
-
-    # def get_queryset(self):
-    #     """Return objects for the current authenticated user only"""
-    #     return self.queryset.filter(user=self.request.user).order_by('-name')
-
-    def get_permissions(self):
-        if self.action == 'create':
+        elif self.action == 'update':
+            composed_perm = IsAdminUser
+            return [composed_perm()]
+        elif self.action == 'destroy':
+            composed_perm = IsAdminUser
+            return [composed_perm()]
+        elif self.action == 'list':
+            composed_perm = IsAuthenticated
+            return [composed_perm()]
+        elif self.action == 'partial_update':
+            composed_perm = IsAdminUser
+            return [composed_perm()]
+        elif self.action == 'retrieve':
             composed_perm = IsAdminUser
             return [composed_perm()]
 
@@ -54,3 +45,17 @@ class OpsDoneViewSet(viewsets.GenericViewSet,
     def perform_create(self, serializer):
         """Create a new opsdone"""
         serializer.save(user=self.request.user)
+
+
+class TagViewSet(BaseAttrViewSet):
+    """Manage tags in the database"""
+
+    queryset = Tag.objects.all()
+    serializer_class = serializers.TagSerializer
+
+
+class OpsDoneViewSet(BaseAttrViewSet):
+    """Manage opsdone in the database"""
+
+    queryset = OpsDone.objects.all()
+    serializer_class = serializers.OpsDoneSerializer
