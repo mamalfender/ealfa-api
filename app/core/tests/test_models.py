@@ -50,10 +50,22 @@ class ModelTests(TestCase):
         )
         self.assertEqual(str(tag), tag.name)
 
-    def test_opsdone_str(self):
-        """Test the opsdone string representation"""
-        opsdone = models.OpsDone.objects.create(
+    def test_workgroup_str(self):
+        """Test the WorkGroup string representation"""
+        workgroup = models.WorkGroup.objects.create(
             user=sample_user(),
             name='operation date'
         )
-        self.assertEqual(str(opsdone), opsdone.name)
+        self.assertEqual(str(workgroup), workgroup.name)
+
+    def test_animal_str(self):
+        """Test the animal string representation"""
+        animal = models.Animal.objects.create(
+            user=sample_user(),
+            species='Dog',
+            breed='German',
+            name='max',
+            age=2
+            )
+        concat = str(animal.species+' '+str(animal.name))
+        self.assertEqual(str(animal), concat)

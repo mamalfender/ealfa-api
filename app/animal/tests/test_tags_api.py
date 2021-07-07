@@ -4,10 +4,10 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
 from core.models import Tag
-from dogs.serializers import TagSerializer
+from animal.serializers import TagSerializer
 
 
-TAGS_URL = reverse('dogs:tag-list')
+TAGS_URL = reverse('animal:tag-list')
 
 
 class PublicTagsApiTests(TestCase):
