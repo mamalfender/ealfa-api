@@ -69,3 +69,7 @@ class AnimalViewSet(viewsets.ModelViewSet):
             return serializers.AnimalDetailSerializer
 
         return self.serializer_class
+
+    def perform_create(self, serializer):
+        """Create a new animal"""
+        serializer.save(user=self.request.user)

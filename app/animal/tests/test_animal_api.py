@@ -31,7 +31,7 @@ def sample_animal(user, **params):
         'species': 'dog',
         'name': 'jack',
         'breed': 'german',
-        'age': 5,
+        'age': '5',
         'gender': 'male',
         'support': 'ealfa',
         'visit_cost': 2,
@@ -116,37 +116,138 @@ class PrivateAnimalApiTests(TestCase):
         serializer = AnimalDetailSerializer(animal)
         self.assertEqual(res.data, serializer.data)
 
-    # def test_create_animal_successful(self):
-    #     """Test creating a new animal"""
-    #     self.client = APIClient()
-    #     self.client.force_authenticate(self.userad)
-    #     payload = {
-    #         'species': 'dog',
-    #         'name': 'hanna',
-    #         'breed': 'german',
-    #         'age': 5,
-    #         'gender': 'female',
-    #         'support': 'ealfa',
-    #         'visit_cost': 2,
-    #         'med_cost': 2,
-    #         'op_cost': 2,
-    #         'food_cost': 2,
-    #         'keep_cost': 2,
-    #         'sum_cost': 10,
-    #     }
-    #     self.client.post(ANIMAL_URL, payload)
+    def test_create_basic_animal(self):
+        """Test creating a basic animal"""
+        self.client = APIClient()
+        self.client.force_authenticate(self.userad)
+        payload = {
+            'species': 'dog',
+            'name': 'hanna',
+            'breed': 'german',
+            'age': '5',
+            'gender': 'female',
+            'support': 'ealfa',
+            'visit_cost': 2,
+            'med_cost': 2,
+            'op_cost': 2,
+            'food_cost': 2,
+            'keep_cost': 2,
+            'sum_cost': 10,
+        }
+        res = self.client.post(ANIMAL_URL, payload)
 
-    #     exists = Animal.objects.filter(
-    #         user=self.userad,
-    #         name=payload['name']
-    #     ).exists()
-    #     self.assertTrue(exists)
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        animal = Animal.objects.get(id=res.data['id'])
+        for key in payload.keys():
+            self.assertEqual(payload[key], getattr(animal, key))
 
-    # def test_create_animal_invalid(self):
-    #     """Test creating a new animal with invalid payload"""
-    #     self.client = APIClient()
-    #     self.client.force_authenticate(self.userad)
-    #     payload = {'name': ''}
-    #     res = self.client.post(ANIMAL_URL, payload)
+    def test_create_animal_with_tags(self):
+        """test creating animal with tags"""
+        self.client = APIClient()
+        self.client.force_authenticate(self.userad)
+        tag1 = sample_tag(user=self.userad, name='wilds')
+        tag2 = sample_tag(user=self.userad, name='urban')
+        payload = {
+            'species': 'dog',
+            'name': 'hanna',
+            'breed': 'german',
+            'age': '5',
+            'gender': 'female',
+            'support': 'ealfa',
+            'visit_cost': 2,
+            'med_cost': 2,
+            'op_cost': 2,
+            'food_cost': 2,
+            'keep_cost': 2,
+            'sum_cost': 10,
+            'tags': [tag1.id, tag2.id]
+        }
+        res = self.client.post(ANIMAL_URL, payload)
 
-    #     self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        animal = Animal.objects.get(id=res.data['id'])
+        tags = animal.tags.all()
+        self.assertEqual(tags.count(), 2)
+        self.assertIn(tag1, tags)
+        self.assertIn(tag2, tags)
+
+    def test_create_animal_with_workgroup(self):
+        """test creating animal with workgroups"""
+        self.client = APIClient()
+        self.client.force_authenticate(self.userad)
+        wg1 = sample_workgroup(user=self.userad, name='dogs')
+        wg2 = sample_workgroup(user=self.userad, name='rescue')
+        payload = {
+            'species': 'dog',
+            'name': 'hanna',
+            'breed': 'german',
+            'age': '5',
+            'gender': 'female',
+            'support': 'ealfa',
+            'visit_cost': 2,
+            'med_cost': 2,
+            'op_cost': 2,
+            'food_cost': 2,
+            'keep_cost': 2,
+            'sum_cost': 10,
+            'work_group': [wg1.id, wg2.id]
+        }
+        res = self.client.post(ANIMAL_URL, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        animal = Animal.objects.get(id=res.data['id'])
+        wgs = animal.work_group.all()
+        self.assertEqual(wgs.count(), 2)
+        self.assertIn(wg1, wgs)
+        self.assertIn(wg2, wgs)
+
+    def test_partial_update_animal(self):
+        """Test updating a animal with patch"""
+        self.client = APIClient()
+        self.client.force_authenticate(self.userad)
+
+        animal = sample_animal(user=self.user)
+        animal.tags.add(sample_tag(user=self.user))
+        new_tag = sample_tag(user=self.user, name='healthy')
+
+        payload = {'name': 'Helen', 'tags': [new_tag.id]}
+        url = detail_url(animal.id)
+        self.client.patch(url, payload)
+
+        animal.refresh_from_db()
+        self.assertEqual(animal.name, payload['name'])
+        tags = animal.tags.all()
+        self.assertEqual(len(tags), 1)
+        self.assertIn(new_tag, tags)
+
+    def test_full_update_animal(self):
+        """Test updating a animal with put"""
+        self.client = APIClient()
+        self.client.force_authenticate(self.userad)
+
+        animal = sample_animal(user=self.user)
+        animal.tags.add(sample_tag(user=self.user))
+
+        payload = {
+            'species': 'dog',
+            'name': 'jackie',
+            'breed': 'german',
+            'age': '5',
+            'gender': 'male',
+            'support': 'ealfa',
+            'visit_cost': 5,
+            'med_cost': 2,
+            'op_cost': 2,
+            'food_cost': 2,
+            'keep_cost': 2,
+            'sum_cost': 13,
+        }
+        url = detail_url(animal.id)
+        self.client.put(url, payload)
+
+        animal.refresh_from_db()
+        self.assertEqual(animal.name, payload['name'])
+        self.assertEqual(animal.visit_cost, payload['visit_cost'])
+        self.assertEqual(animal.sum_cost, payload['sum_cost'])
+        tags = animal.tags.all()
+        self.assertEqual(len(tags), 0)
